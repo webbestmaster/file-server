@@ -1,0 +1,16 @@
+{
+  "name": "file-server",
+  "version": "0.0.1",
+  "description": "file server",
+  "license": "MIT",
+  "repository": {
+    "type": "git"
+  },
+  "scripts": {
+    "no-script": "no-script"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}
