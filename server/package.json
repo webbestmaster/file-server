@@ -10,6 +10,7 @@
     "no-script": "no-script"
   },
   "dependencies": {
+    "mime-types": "^2.1.11"
   },
   "devDependencies": {
   }
