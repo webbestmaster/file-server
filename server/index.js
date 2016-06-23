@@ -45,9 +45,47 @@ var server = new http.createServer(function (req, res) {
 	fs.stat(pathName, function (err, fileInfo) {
 
 		if (err) {
-			console.error('Not Found:', err);
-			res.statusCode = 404;
-			res.end('404 - Not Found');
+
+			if (req.headers.referer) {
+				var urlPathName = url.parse(req.headers.referer).pathname;
+				var newPathName = path.normalize(fileRootPath + pathSep + urlPathName + pathSep + reqUrl.pathname);
+
+				fs.stat(newPathName, function (err, fileInfo) {
+
+					if (err) {
+						console.error('Not Found:', err);
+						res.statusCode = 404;
+						res.end('404 - Not Found');
+						return;
+					}
+
+
+					// if path walk to directory - add /index.html to end ot the path
+					if (fileInfo.isDirectory()) {
+						newPathName = path.normalize(newPathName + pathSep + 'index.html');
+					}
+
+					return writeFileToResponse(newPathName, res);
+
+
+				});
+
+			} else {
+				console.error('Not Found:', err);
+				res.statusCode = 404;
+				res.end('404 - Not Found');
+
+			}
+
+
+
+
+
+
+
+
+
+
 			return;
 		}
 
