@@ -4,25 +4,38 @@ pathSep = path.sep;
 var url = require('url');
 var fs = require('fs');
 var mime = require('mime-types');
+var zlib = require('zlib');
 
 var fileFolderPath = 'files';
 
 var fileRootPath = path.normalize([__dirname, '..', fileFolderPath].join(pathSep));
 
-function writeFileToResponse(path, res) {
+function writeFileToResponse(path, req, res) {
 
 	var file = new fs.ReadStream(path);
 
-	file.pipe(res);
+	// set mime type
+	res.setHeader('Content-Type', mime.lookup(path));
+
+	var acceptEncoding = req.headers['accept-encoding'] || '';
+
+	// Note: this is not a conformant accept-encoding parser.
+	// See http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.3
+	if ((/\bdeflate\b/).test(acceptEncoding)) {
+		res.setHeader('Content-Encoding', 'deflate');
+		file.pipe(zlib.createDeflate()).pipe(res);
+	} else if ((/\bgzip\b/).test(acceptEncoding)) {
+		res.setHeader('Content-Encoding', 'gzip');
+		file.pipe(zlib.createGzip()).pipe(res);
+	} else {
+		file.pipe(res);
+	}
 
 	file.on('error', function (err) {
 		console.error('Not Found:', err);
 		res.statusCode = 404;
 		res.end('404 - Not Found');
 	});
-
-	// set mime type
-	res.setHeader('Content-Type', mime.lookup(path));
 
 	// client close connection
 	// close - this is error for res
@@ -65,7 +78,7 @@ var server = new http.createServer(function (req, res) {
 						newPathName = path.normalize(newPathName + pathSep + 'index.html');
 					}
 
-					return writeFileToResponse(newPathName, res);
+					return writeFileToResponse(newPathName, req, res);
 
 
 				});
@@ -77,16 +90,8 @@ var server = new http.createServer(function (req, res) {
 
 			}
 
-
-
-
-
-
-
-
-
-
 			return;
+
 		}
 
 		// if path walk to directory - add /index.html to end ot the path
@@ -94,7 +99,7 @@ var server = new http.createServer(function (req, res) {
 			pathName = path.normalize(pathName + pathSep + 'index.html');
 		}
 
-		return writeFileToResponse(pathName, res);
+		return writeFileToResponse(pathName, req, res);
 
 	});
 
