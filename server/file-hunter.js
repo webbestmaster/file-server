@@ -65,17 +65,18 @@ FileHunter.prototype.find = function (req, res, err, cb) {
 
 FileHunter.prototype.send = function (req, res, err, path) {
 
+	var fileHunter = this;
+
 	if (err) {
-		send404(req, res, err);
+		fileHunter.page404(req, res, err);
 		return;
 	}
 
-	var file = 	new fs.ReadStream(path);
+	var file = 	new fs.ReadStream(path),
+		acceptEncoding = req.headers['accept-encoding'] || '';
 
 	// set mime type
 	res.setHeader('Content-Type', mime.lookup(path));
-
-	var acceptEncoding = req.headers['accept-encoding'] || '';
 
 	// Note: this is not a conformant accept-encoding parser.
 	// See http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.3
@@ -90,7 +91,7 @@ FileHunter.prototype.send = function (req, res, err, path) {
 	}
 
 	file.on('error', function (err) {
-		send404(req, res, err);
+		fileHunter.page404(req, res, err);
 	});
 
 	// client close connection
@@ -101,15 +102,5 @@ FileHunter.prototype.send = function (req, res, err, path) {
 	});
 
 };
-
-FileHunter.prototype.send404 = function (req, res, err) {
-	send404(req, res, err);
-};
-
-function send404(req, res, err) {
-	console.error('Not Found:', err);
-	res.statusCode = 404;
-	res.end('404 - Not Found');
-}
 
 module.exports = FileHunter;
