@@ -2,6 +2,7 @@
 
 var http = require('http'),
 	path = require('path'),
+	ip = require('ip'),
 	FileHunter = require('./file-server/file-hunter');
 
 function replaceValues(from, to) {
@@ -46,6 +47,7 @@ Server.prototype.initialize = function (userConfigArg) {
 	});
 
 	httpServer = new http.createServer(function (req, res) {
+		console.log(req.url);
 		fileHunter.find(req, res, null, fileHunter.send);
 	});
 
@@ -60,7 +62,7 @@ Server.prototype.run = function () {
 
 	serverAttr.httpServer.listen(serverAttr.config.port);
 
-	console.log('server started');
+	console.log('Server started:', ip.address() + ':' + serverAttr.config.port);
 
 };
 
