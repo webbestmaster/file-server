@@ -40,7 +40,7 @@ FileHunter.prototype.find = function (req, res, err, cb) {
 						refPathName = path.normalize(refPathName + pathSep + 'index.html');
 					}
 
-					cb(req, res, null, refPathName);
+					cb(req, res, null, refPathName, fileInfo);
 
 				});
 
@@ -57,13 +57,13 @@ FileHunter.prototype.find = function (req, res, err, cb) {
 			pathName = path.normalize(pathName + pathSep + 'index.html');
 		}
 
-		cb(req, res, null, pathName);
+		cb(req, res, null, pathName, fileInfo);
 
 	});
 
 };
 
-FileHunter.prototype.send = function (req, res, err, path) {
+FileHunter.prototype.send = function (req, res, err, path, fileInfo) {
 
 	var fileHunter = this;
 
@@ -72,11 +72,15 @@ FileHunter.prototype.send = function (req, res, err, path) {
 		return;
 	}
 
-	var file = 	new fs.ReadStream(path),
-		acceptEncoding = req.headers['accept-encoding'] || '';
-
 	// set mime type
 	res.setHeader('Content-Type', mime.lookup(path));
+
+	// TODO: check last modified and send 304
+
+	// TODO: set header last modified
+
+	var file = 	new fs.ReadStream(path),
+		acceptEncoding = req.headers['accept-encoding'] || '';
 
 	// Note: this is not a conformant accept-encoding parser.
 	// See http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.3
