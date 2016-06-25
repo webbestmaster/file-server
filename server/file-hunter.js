@@ -1,3 +1,5 @@
+"use strict";
+
 var url = require('url');
 var fs = require('fs');
 var path = require('path');
@@ -65,7 +67,10 @@ FileHunter.prototype.find = function (req, res, err, cb) {
 
 FileHunter.prototype.send = function (req, res, err, path, fileInfo) {
 
-	var fileHunter = this;
+	var fileHunter = this,
+		lastModified,
+		file,
+		acceptEncoding;
 
 	if (err) {
 		fileHunter.page404(req, res, err);
@@ -75,12 +80,19 @@ FileHunter.prototype.send = function (req, res, err, path, fileInfo) {
 	// set mime type
 	res.setHeader('Content-Type', mime.lookup(path));
 
-	// TODO: check last modified and send 304
+	lastModified = fileInfo.mtime.toString();
 
-	// TODO: set header last modified
+	if (req.headers['if-modified-since'] === lastModified) {
+		res.statusCode = 304;
+		res.end();
+		return;
+	}
 
-	var file = 	new fs.ReadStream(path),
-		acceptEncoding = req.headers['accept-encoding'] || '';
+	res.setHeader('Last-Modified', lastModified);
+	res.setHeader('Cache-Control', 'private, max-age=300');
+
+	file = 	new fs.ReadStream(path);
+	acceptEncoding = req.headers['accept-encoding'] || '';
 
 	// Note: this is not a conformant accept-encoding parser.
 	// See http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.3

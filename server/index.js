@@ -1,3 +1,5 @@
+"use strict";
+
 var http = require('http');
 var path = require('path');
 var fs = require('fs');
@@ -23,12 +25,11 @@ var config = (function () {
 
 fileHunter.root = path.normalize([__dirname, '..', config.root].join(path.sep));
 fileHunter.page404 = config.page404;
+fileHunter.send = fileHunter.send.bind(fileHunter);
 
 var server = new http.createServer(function (req, res) {
 
-	fileHunter.find(req, res, null, function (req, res, err, cb) {
-		fileHunter.send(req, res, err, cb);
-	});
+	fileHunter.find(req, res, null, fileHunter.send);
 
 });
 
