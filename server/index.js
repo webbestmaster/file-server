@@ -1,36 +1,67 @@
 "use strict";
 
-var http = require('http');
-var path = require('path');
-// var fs = require('fs');
-var FileHunter = require('./file-server/file-hunter');
+var http = require('http'),
+	path = require('path'),
+	FileHunter = require('./file-server/file-hunter');
 
-var config = (function () {
+function replaceValues(from, to) {
 
-	var userConfig = require('./user-config'),
-		defaultsConfig = require('./file-server/defaults-config'),
-		config = {},
+	var merge = {},
 		key;
 
-	for (key in defaultsConfig) {
-		if (defaultsConfig.hasOwnProperty(key)) {
-			config[key] = userConfig.hasOwnProperty(key) ? userConfig[key] : defaultsConfig[key];
+	for (key in to) {
+		if (to.hasOwnProperty(key)) {
+			merge[key] = from.hasOwnProperty(key) ? from[key] : to[key];
 		}
 	}
 
-	return config;
+	return merge;
 
-}());
+}
 
-var fileHunter = new FileHunter({
-	root: path.normalize([__dirname, '..', config.root].join(path.sep)),
-	page404: config.page404
-});
+function Server(userConfigArg) {
 
-var server = new http.createServer(function (req, res) {
+	var server = this;
 
-	fileHunter.find(req, res, null, fileHunter.send);
+	server.attr = {
+		httpServer: null,
+		config: null
+	};
 
-});
+	server.initialize(userConfigArg);
 
-server.listen(config.port);
+}
+
+Server.prototype.initialize = function (userConfigArg) {
+
+	var config, fileHunter, server, httpServer;
+
+	server = this;
+
+	config = replaceValues(userConfigArg || {}, require('./file-server/defaults-config'));
+
+	fileHunter = new FileHunter({
+		root: path.normalize([process.cwd(), config.root].join(path.sep)),
+		page404: config.page404
+	});
+
+	httpServer = new http.createServer(function (req, res) {
+		fileHunter.find(req, res, null, fileHunter.send);
+	});
+
+	server.attr.httpServer = httpServer;
+	server.attr.config = config;
+
+};
+
+Server.prototype.run = function () {
+
+	var serverAttr = this.attr;
+
+	serverAttr.httpServer.listen(serverAttr.config.port);
+
+	console.log('server started');
+
+};
+
+module.exports = Server;

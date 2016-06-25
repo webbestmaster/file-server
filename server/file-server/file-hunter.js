@@ -3,7 +3,6 @@
 var url = require('url');
 var fs = require('fs');
 var path = require('path');
-var pathSep = path.sep;
 var mime = require('mime-types');
 var zlib = require('zlib');
 var defaultsConfig = require('./defaults-config');
@@ -42,6 +41,7 @@ FileHunter.prototype.find = function (req, res, err, cb) {
 
 		if (err) {
 
+			// if file nor found try to find relative req.referer
 			if (req.headers.referer) {
 				var referer = url.parse(req.headers.referer).pathname,
 					refPathName = path.normalize(fileHunter.root + pathSep + referer + pathSep + reqUrl.pathname);
