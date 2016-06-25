@@ -6,20 +6,35 @@ var path = require('path');
 var pathSep = path.sep;
 var mime = require('mime-types');
 var zlib = require('zlib');
+var defaultsConfig = require('./defaults-config');
 
-function FileHunter() {
+function FileHunter(options) {
 
 	var fileHunter = this;
 
-	fileHunter.root = '';
+	fileHunter.pathSep = path.sep;
+	fileHunter.root = options.root;
+
+	if (defaultsConfig.page404 === options.page404) {
+		fileHunter.page404 = options.page404;
+	} else {
+		fileHunter.page404 = path.normalize(options.root + path.sep + options.page404);
+	}
+
+	fileHunter.send = fileHunter.send.bind(fileHunter);
 
 }
+
+FileHunter.prototype.fakeFileInfo = {
+	mtime: Date.now().toString()
+};
 
 FileHunter.prototype.find = function (req, res, err, cb) {
 
 	// FIXME: add here check for err if needed
 	var fileHunter = this,
 		reqUrl = url.parse(req.url),
+		pathSep = fileHunter.pathSep,
 		pathName = path.normalize(fileHunter.root + pathSep + reqUrl.pathname);
 
 	// detect file or folder
@@ -34,7 +49,7 @@ FileHunter.prototype.find = function (req, res, err, cb) {
 				fs.stat(refPathName, function (err, fileInfo) {
 
 					if (err) {
-						return cb(req, res, err, null);
+						return cb(req, res, err, pathName);
 					}
 
 					// if path walk to directory - add /index.html to end ot the path
@@ -47,7 +62,7 @@ FileHunter.prototype.find = function (req, res, err, cb) {
 				});
 
 			} else {
-				cb(req, res, err, null);
+				cb(req, res, err, pathName);
 			}
 
 			return;
@@ -73,7 +88,7 @@ FileHunter.prototype.send = function (req, res, err, path, fileInfo) {
 		acceptEncoding;
 
 	if (err) {
-		fileHunter.page404(req, res, err);
+		fileHunter.send404(req, res, err, path);
 		return;
 	}
 
@@ -107,7 +122,9 @@ FileHunter.prototype.send = function (req, res, err, path, fileInfo) {
 	}
 
 	file.on('error', function (err) {
-		fileHunter.page404(req, res, err);
+		res.statusCode = 404;
+		res.end();
+		// fileHunter.send404(req, res, err);
 	});
 
 	// client close connection
@@ -116,6 +133,21 @@ FileHunter.prototype.send = function (req, res, err, path, fileInfo) {
 	res.on('close', function () {
 		file.destroy();
 	});
+
+};
+
+FileHunter.prototype.send404 = function (req, res, err, path) {
+
+	var fileHunter = this,
+		mimeType = mime.lookup(path);
+
+	res.statusCode = 404;
+
+	if (!mimeType || mimeType === mime.types.html) {
+		fileHunter.send(req, res, null, fileHunter.page404, fileHunter.fakeFileInfo);
+	} else {
+		res.end();
+	}
 
 };
 

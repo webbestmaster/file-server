@@ -2,14 +2,13 @@
 
 var http = require('http');
 var path = require('path');
-var fs = require('fs');
-var FileHunter = require('./file-hunter');
-var fileHunter = new FileHunter();
+// var fs = require('fs');
+var FileHunter = require('./file-server/file-hunter');
 
 var config = (function () {
 
 	var userConfig = require('./user-config'),
-		defaultsConfig = require('./defaults-config'),
+		defaultsConfig = require('./file-server/defaults-config'),
 		config = {},
 		key;
 
@@ -23,9 +22,10 @@ var config = (function () {
 
 }());
 
-fileHunter.root = path.normalize([__dirname, '..', config.root].join(path.sep));
-fileHunter.page404 = config.page404;
-fileHunter.send = fileHunter.send.bind(fileHunter);
+var fileHunter = new FileHunter({
+	root: path.normalize([__dirname, '..', config.root].join(path.sep)),
+	page404: config.page404
+});
 
 var server = new http.createServer(function (req, res) {
 
