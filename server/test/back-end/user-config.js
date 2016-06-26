@@ -1,4 +1,4 @@
 module.exports = {
-	root: './../front-end/www/',
+	root: './../front-end/',
 	page404: 'custom-404-page/index.html'
 };
