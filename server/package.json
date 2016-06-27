@@ -1,18 +1,13 @@
 {
-  "name": "file-server",
+  "name": "fs-server",
   "version": "0.0.1",
   "description": "file server",
   "license": "MIT",
   "repository": {
     "type": "git"
   },
-  "scripts": {
-    "no-script": "no-script"
-  },
   "dependencies": {
     "mime-types": "^2.1.11",
-    "ip": "*"
-  },
-  "devDependencies": {
+    "ip": "^1.1.3"
   }
 }

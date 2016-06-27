@@ -3,7 +3,7 @@
 var http = require('http'),
 	path = require('path'),
 	ip = require('ip'),
-	FileHunter = require('./file-server/file-hunter');
+	FileHunter = require('./data/file-hunter');
 
 function replaceValues(from, to) {
 
@@ -39,7 +39,7 @@ Server.prototype.initialize = function (userConfigArg) {
 
 	server = this;
 
-	config = replaceValues(userConfigArg || {}, require('./file-server/defaults-config'));
+	config = replaceValues(userConfigArg || {}, require('./data/defaults-config'));
 
 	fileHunter = new FileHunter({
 		root: path.normalize([process.cwd(), config.root].join(path.sep)),
